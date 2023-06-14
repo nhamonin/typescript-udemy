@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/nhamonin/typescript-udemy/issues"
   },
-  "homepage": "https://github.com/nhamonin/typescript-udemy#readme"
+  "homepage": "https://github.com/nhamonin/typescript-udemy#readme",
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  }
 }

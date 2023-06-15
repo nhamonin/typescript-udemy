@@ -1,3 +1,47 @@
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  people: number;
+}
+
+type ListenerFunction = (projects: Project[]) => void;
+
+class ProjectState {
+  private listeners: ListenerFunction[] = [];
+  private projects: Project[] = [];
+  private static instance: ProjectState;
+
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new ProjectState();
+    }
+
+    return this.instance;
+  }
+
+  addListener(listenerFunction: ListenerFunction) {
+    this.listeners.push(listenerFunction);
+  }
+
+  addProject(title: string, description: string, people: number) {
+    const newProject = {
+      id: Math.random().toString(),
+      title,
+      description,
+      people,
+    };
+
+    this.projects.push(newProject);
+
+    for (const listener of this.listeners) {
+      listener([...this.projects]);
+    }
+  }
+}
+
+const projectState = ProjectState.getInstance();
+
 // Validation
 interface Validatable {
   value: string | number;
@@ -63,6 +107,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
   element: HTMLElement;
+  assignedProjects: Project[];
 
   constructor(private type: 'active' | 'finished') {
     this.templateElement = document.getElementById(
@@ -76,9 +121,27 @@ class ProjectList {
     );
     this.element = importedNode.firstElementChild as HTMLElement;
     this.element.id = `${this.type}-projects`;
+    this.assignedProjects = [];
+
+    projectState.addListener((projects) => {
+      this.assignedProjects = projects;
+      this.renderProjects();
+    });
 
     this.attach();
     this.renderContent();
+  }
+
+  private renderProjects() {
+    const listEl = document.getElementById(
+      `${this.type}-projects-list`
+    )! as HTMLUListElement;
+
+    for (let project of this.assignedProjects) {
+      const listItem = document.createElement('li');
+      listItem.textContent = project.title;
+      listEl.appendChild(listItem);
+    }
   }
 
   private renderContent() {
@@ -178,7 +241,7 @@ class ProjectInput {
 
     if (Array.isArray(userInput)) {
       const [title, description, people] = userInput;
-      console.log({ title, description, people });
+      projectState.addProject(title, description, people);
       this.clearInputs();
     }
   }

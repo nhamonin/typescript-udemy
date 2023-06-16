@@ -1,8 +1,16 @@
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  people: number;
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus
+  ) {}
 }
 
 type ListenerFunction = (projects: Project[]) => void;
@@ -25,14 +33,15 @@ class ProjectState {
   }
 
   addProject(title: string, description: string, people: number) {
-    const newProject = {
-      id: Math.random().toString(),
+    const project = new Project(
+      Math.random().toString(),
       title,
       description,
       people,
-    };
+      ProjectStatus.Active
+    );
 
-    this.projects.push(newProject);
+    this.projects.push(project);
 
     for (const listener of this.listeners) {
       listener([...this.projects]);
@@ -124,7 +133,14 @@ class ProjectList {
     this.assignedProjects = [];
 
     projectState.addListener((projects) => {
-      this.assignedProjects = projects;
+      const relevantProjects = projects.filter((project) => {
+        if (this.type === 'active') {
+          return project.status === ProjectStatus.Active;
+        }
+
+        return project.status === ProjectStatus.Finished;
+      });
+      this.assignedProjects = relevantProjects;
       this.renderProjects();
     });
 
@@ -136,6 +152,8 @@ class ProjectList {
     const listEl = document.getElementById(
       `${this.type}-projects-list`
     )! as HTMLUListElement;
+
+    listEl.innerHTML = '';
 
     for (let project of this.assignedProjects) {
       const listItem = document.createElement('li');
